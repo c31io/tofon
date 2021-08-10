@@ -16,7 +16,7 @@ def copy_objects(from_col, to_col, linked, dupe_lut):
         dupe_lut[o] = dupe
 
 def copy_collection(parent, collection, linked=False, prefix=''):
-    '''Copy collections (default not linked). Return the new collection with prefix ToF.'''
+    '''Copy collection (default not linked). Return the new collection with prefix ToF.'''
     dupe_lut = defaultdict(lambda : None)
     def _copy(parent, collection, linked=False):
         cc = bpy.data.collections.new(prefix + collection.name)
@@ -32,6 +32,21 @@ def copy_collection(parent, collection, linked=False, prefix=''):
             dupe.parent = parent
     return ret
 
+def remove_objects(col):
+    '''Remove objects from one collection.'''
+    if col.objects != None:
+        for o in col.objects:
+            bpy.data.objects.remove(o)
+
+def remove_collection(col):
+    '''Remove collection.'''
+    def _remove(col):
+        remove_objects(col)
+        for c in col.children:
+            _remove(c)
+        bpy.data.collections.remove(col)
+    _remove(col)
+
 #TODO encode string ToF_mat -> the set of material names
 
 #TODO decode the set of material names -> string ToF_mat
@@ -42,8 +57,10 @@ class TOFON_OT_apply_mode(Operator):
     bl_label = 'Apply Mode'
     @classmethod
     def poll(cls, context):
-        '''Test if a non-root collection or ToF collection is selected.'''
+        '''Test if a non-first-order collection or ToF collection is selected.'''
         if bpy.context.collection == bpy.data.scenes['Scene'].collection:
+            return False
+        if bpy.context.collection.name not in bpy.data.scenes['Scene'].collection.children.keys():
             return False
         if bpy.context.collection.name[:4] == 'ToF_':
             return False
@@ -51,10 +68,7 @@ class TOFON_OT_apply_mode(Operator):
     def execute(self, context):
         # remove the old collection
         if isinstance(bpy.types.Scene.ToF_col, str):
-            old_col = bpy.data.collections.get(bpy.types.Scene.ToF_col)
-            for obj in old_col.objects:
-                bpy.data.objects.remove(obj)
-            bpy.data.collections.remove(old_col)
+            remove_collection(bpy.data.collections.get(bpy.types.Scene.ToF_col))
         # add channel collection
         col = context.collection
         chan_col = copy_collection(context.scene.collection, col, prefix='ToF_')
