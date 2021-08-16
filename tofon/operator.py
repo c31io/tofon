@@ -95,14 +95,32 @@ class TOFON_OT_apply_mode(Operator):
             RGB_cols.append(chan_col.name)
         else:
             RGB_cols.append(None)
-        #TODO replace materials in RGB_cols with 'ToF_' materials
-        if RGB_cols[0] != None:
+        # enable nodes for all materials
+        for i in bpy.data.materials:
+            i.use_nodes = True
+        #TODO create ToF twins for all materials
+        '''in blender python console type
+        >>> bpy.data.materials['Material'].node_tree.nodes["Principled BSDF"].inputs['Base Color'].type
+        'RGBA'
+        this command may help your comprehension'''
+        if mode[1] == True:
+            # create ToF_R_* materials
             pass
+        # if mode[2] mode[3] is True
+        #TODO relink materials in RGB_cols with ToF twins
+        if mode[1] == True:
+            # traverse & relinking
+            pass
+        # if mode[2] mode[3] is True
         return {'FINISHED'}
 
 #TODO implement scan vectors: normal, confocal, non-confocal
 
-#TODO implement data synthesis: pybind & python fallback
+#TODO implement data synthesis: pybind (stand-alone) & python fallback
+#TODO fallback warning self.report({'WARNING'},
+#                                   'Pybind module not found.
+#                                       Falling back to Python implementation.
+#                                       SYNTHESIS WILL BE SLOW!!')
 
 def register():
     bpy.utils.register_class(TOFON_OT_apply_mode)
