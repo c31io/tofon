@@ -47,10 +47,6 @@ def remove_collection(col):
         bpy.data.collections.remove(col)
     _remove(col)
 
-#TODO encode string ToF_mat -> the set of material names
-
-#TODO decode the set of material names -> string ToF_mat
-
 class TOFON_OT_apply_mode(Operator):
     '''Apply ToF mode. Create a new collection and prepare shader nodes.'''
     bl_idname = 'scene.apply_tof_mode'
@@ -80,21 +76,33 @@ class TOFON_OT_apply_mode(Operator):
         col = context.collection
         mode = scene.ToF_mode
         scene.ToF_col = ''
+        RGB_cols = []
         if mode[0] == True:
             chan_col = copy_collection(scene.collection, col, prefix='ToF_R_')
             scene.ToF_col = chan_col.name + cns
+            RGB_cols.append(chan_col.name)
+        else:
+            RGB_cols.append(None)
         if mode[1] == True:
             chan_col = copy_collection(scene.collection, col, prefix='ToF_G_')
             scene.ToF_col += chan_col.name + cns
+            RGB_cols.append(chan_col.name)
+        else:
+            RGB_cols.append(None)
         if mode[2] == True:
             chan_col = copy_collection(scene.collection, col, prefix='ToF_B_')
             scene.ToF_col += chan_col.name + cns
-        #TODO add channel materials by ToF_Mode
+            RGB_cols.append(chan_col.name)
+        else:
+            RGB_cols.append(None)
+        #TODO replace materials in RGB_cols with 'ToF_' materials
+        if RGB_cols[0] != None:
+            pass
         return {'FINISHED'}
 
-#TODO implement scan vector
+#TODO implement scan vectors: normal, confocal, non-confocal
 
-#TODO implement data synthesis
+#TODO implement data synthesis: pybind & python fallback
 
 def register():
     bpy.utils.register_class(TOFON_OT_apply_mode)
