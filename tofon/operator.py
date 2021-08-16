@@ -58,22 +58,37 @@ class TOFON_OT_apply_mode(Operator):
     @classmethod
     def poll(cls, context):
         '''Test if a non-first-order collection or ToF collection is selected.'''
-        if bpy.context.collection == bpy.data.scenes['Scene'].collection:
+        if context.collection == bpy.data.scenes['Scene'].collection:
             return False
-        if bpy.context.collection.name not in bpy.data.scenes['Scene'].collection.children.keys():
+        if context.collection.name not in bpy.data.scenes['Scene'].collection.children.keys():
             return False
-        if bpy.context.collection.name[:4] == 'ToF_':
+        if context.collection.name[:4] == 'ToF_':
             return False
         return True
     def execute(self, context):
-        # remove the old collection
-        if isinstance(bpy.types.Scene.ToF_col, str):
-            remove_collection(bpy.data.collections.get(bpy.types.Scene.ToF_col))
-        # add channel collection
+        cns = '__COLLECTION_NAME_SPLIT__'
+        scene = context.scene
+        Scene = bpy.types.Scene
+        # remove the old collections
+        old_cols = scene.ToF_col.split(cns)[:-1]
+        for i in old_cols:
+            try:
+                remove_collection(bpy.data.collections.get(i))
+            except AttributeError:
+                print('not initialized but okay')
+        # add channel collections
         col = context.collection
-        chan_col = copy_collection(context.scene.collection, col, prefix='ToF_')
-        bpy.types.Scene.ToF_col = chan_col.name
-        #TODO remove the old materials
+        mode = scene.ToF_mode
+        scene.ToF_col = ''
+        if mode[0] == True:
+            chan_col = copy_collection(scene.collection, col, prefix='ToF_R_')
+            scene.ToF_col = chan_col.name + cns
+        if mode[1] == True:
+            chan_col = copy_collection(scene.collection, col, prefix='ToF_G_')
+            scene.ToF_col += chan_col.name + cns
+        if mode[2] == True:
+            chan_col = copy_collection(scene.collection, col, prefix='ToF_B_')
+            scene.ToF_col += chan_col.name + cns
         #TODO add channel materials by ToF_Mode
         return {'FINISHED'}
 
