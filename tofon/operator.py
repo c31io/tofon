@@ -98,20 +98,24 @@ class TOFON_OT_apply_mode(Operator):
         # enable nodes for all materials
         for i in bpy.data.materials:
             i.use_nodes = True
-        #TODO create ToF twins for all materials
+        # create ToF twins for all materials
         '''in blender python console type
         >>> bpy.data.materials['Material'].node_tree.nodes["Principled BSDF"].inputs['Base Color'].type
         'RGBA'
         this command may help your comprehension'''
-        if mode[1] == True:
-            # create ToF_R_* materials
+        if mode[0] == True:
+            for material in bpy.data.materials:
+                #TODO copy material with prefix ToF_R_
+                for node in material.node_tree.nodes: #TODO act only on ToFs
+                    for inpt in node.inputs:
+                        if inpt.type == 'RGBA' and inpt.is_linked == False:
+                            print(material.name, node.name, inpt.name)
+                            #TODO link ToF nodes
+                            pass
             pass
-        # if mode[2] mode[3] is True
-        #TODO relink materials in RGB_cols with ToF twins
-        if mode[1] == True:
+            #TODO relink materials in RGB_cols with ToF twins
             # traverse & relinking
-            pass
-        # if mode[2] mode[3] is True
+        # if mode[1] mode[2] is True
         return {'FINISHED'}
 
 #TODO implement scan vectors: normal, confocal, non-confocal
