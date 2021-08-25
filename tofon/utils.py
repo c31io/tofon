@@ -1,6 +1,7 @@
 import bpy
 from collections import defaultdict
 
+# https://blender.stackexchange.com/questions/157828/how-to-duplicate-a-certain-collection-using-python
 def copy_objects(from_col, to_col, linked, dupe_lut):
     '''Copy objects from one collection to another.'''
     for o in from_col.objects:

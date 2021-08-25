@@ -1,6 +1,3 @@
-# copy_*s are found below:
-# https://blender.stackexchange.com/questions/157828/how-to-duplicate-a-certain-collection-using-python
-
 import bpy
 from bpy.types import Operator
 from .utils import (
