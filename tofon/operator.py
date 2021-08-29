@@ -3,8 +3,8 @@ from bpy.types import Operator
 from .utils import (
     copy_collection, remove_collection,
     relink_materials, tofy_object, tofy_lights,
-    target_types
-    )
+    target_types)
+from .panel import reso_max
 
 class TOFON_OT_apply_mode(Operator):
     '''Apply ToF mode. Create a new collection and prepare shader nodes.'''
@@ -72,7 +72,7 @@ class TOFON_OT_apply_mode(Operator):
         return {'FINISHED'}
 
 #TODO
-class TOFON_OT_scan(Operator):
+class TOFON_OT_render_scan(Operator):
     '''
     normal: reso = (x*m)*(y*m)*f
       internally use f many (x*m)*(y*m) images to present a x*y image with f*m*m samples.
@@ -88,7 +88,48 @@ class TOFON_OT_scan(Operator):
         https://blender.stackexchange.com/questions/2170/how-to-access-render-result-pixels-from-python-script
     but you can use a ram-disk, e.g. tmpfs on Linux platforms.
     '''
-    pass
+    bl_idname = 'scene.render_tof_scan'
+    bl_label = 'Render Scan'
+    @classmethod
+    def poll(cls, context):
+        scene = context.scene
+        if scene.render.engine != 'CYCLES':
+            return False
+        if scene.ToF_multip * max(scene.ToF_reso_x, scene.ToF_reso_y) > reso_max:
+            return False
+        return True
+    def execute(self, context):
+        scene = context.scene
+        # Cycle
+        scene.cycles.samples = 1 # prevent overwrite
+        # Saving
+        scene.render.use_file_extension = True
+        scene.render.use_render_cache = False
+        # Format
+        scene.render.image_settings.file_format = 'OPEN_EXR'
+        scene.render.image_settings.color_mode = 'RGB'
+        scene.render.image_settings.color_depth = '32'
+        scene.render.image_settings.exr_codec = 'ZIP'
+        scene.render.image_settings.use_zbuffer = False
+        scene.render.image_settings.use_preview = False
+        scene.render.use_overwrite = True
+        scene.render.use_placeholder = True
+        # Post Processing
+        scene.render.use_compositing = False
+        scene.render.use_sequencer = False
+        scene.render.dither_intensity = 0
+        # ToF
+        scene.frame_start = 1
+        scene.frame_end = scene.ToF_frames
+        scene.render.resolution_x = scene.ToF_reso_x * scene.ToF_multip
+        scene.render.resolution_y = scene.ToF_reso_y * scene.ToF_multip
+        scene.render.resolution_percentage = 100
+        #TODO Render
+        fpath = scene.render.filepath
+        for c, b in enumerate(scene.ToF_mode):
+            pass
+        scene.render.path = fpath
+        return {'FINISHED'}
 
 #TODO implement data synthesis: pybind (stand-alone) & python fallback
 #TODO fallback warning self.report({'WARNING'},
@@ -100,6 +141,8 @@ class TOFON_OT_synthesis(Operator):
 
 def register():
     bpy.utils.register_class(TOFON_OT_apply_mode)
+    bpy.utils.register_class(TOFON_OT_render_scan)
 
 def unregister():
     bpy.utils.unregister_class(TOFON_OT_apply_mode)
+    bpy.utils.unregister_class(TOFON_OT_render_scan)
