@@ -13,7 +13,7 @@ def copy_objects(from_col, to_col, linked, dupe_lut):
 
 def copy_collection(parent, collection, linked=False, prefix=''):
     '''Copy collection (default not linked). Return the new collection with prefix ToF.'''
-    dupe_lut = defaultdict(lambda : None)
+    dupe_lut = defaultdict(lambda : None) # a dict returns None if key not found
     def _copy(parent, collection, linked=False):
         cc = bpy.data.collections.new(prefix + collection.name)
         copy_objects(collection, cc, linked, dupe_lut)
@@ -43,8 +43,22 @@ def remove_collection(col):
         bpy.data.collections.remove(col)
     _remove(col)
 
-def relink_materials(col_name, prefix):
-    return NotImplemented
+target_types = ['MESH', 'CURVE', 'SURFACE', 'META', 'FONT', 'VOLUME']
 
-def relink_lights(col_name, prefix):
+def relink_objects(col, c):
+    '''Relink 3D objects.'''
+    if col.objects != None:
+        for o in col.objects:
+            if o.type in target_types:
+                o.active_material = bpy.data.materials[f'ToF_{"RGB"[c]}_{o.active_material.name}']
+
+def relink_materials(col, c):
+    '''Relink materials in a collection.'''
+    def _relink(col, c):
+        relink_objects(col, c)
+        for c in col.children:
+            _relink(c)
+    _relink(col, c)
+
+def relink_lights(collection, c):
     return NotImplemented
