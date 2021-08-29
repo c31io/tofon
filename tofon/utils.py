@@ -56,9 +56,42 @@ def relink_materials(col, c):
     '''Relink materials in a collection.'''
     def _relink(col, c):
         relink_objects(col, c)
-        for c in col.children:
-            _relink(c)
+        for child in col.children:
+            _relink(child, c)
     _relink(col, c)
 
-def relink_lights(collection, c):
-    return NotImplemented
+def tofy_object(o, c, base):
+    '''Add ToF nodes to material or light.'''
+    o.use_nodes = True
+    p, f = (c+1)%3, (c+2)%3 # path length and fall-off channels
+    node_tree = o.node_tree
+    nodes = node_tree.nodes
+    power = nodes.new('ShaderNodeMath')
+    power.operation = 'POWER'
+    power.inputs[0].default_value = base
+    lpath = nodes.new('ShaderNodeLightPath')
+    node_tree.links.new(lpath.outputs['Ray Length'], power.inputs[1])
+    for node in nodes:
+        for inpt in node.inputs:
+            if inpt.type == 'RGBA' and inpt.is_linked == False:
+                color = inpt.default_value[c] # backup original color
+                combine = nodes.new('ShaderNodeCombineXYZ')
+                combine.inputs['XYZ'[c]].default_value = color
+                combine.inputs['XYZ'[f]].default_value = 1.0
+                node_tree.links.new(power.outputs[0], combine.inputs['XYZ'[p]])
+                node_tree.links.new(combine.outputs[0], inpt)
+
+def tofy_objects(col, c, base):
+    '''Apply ToF nodes to light objects.'''
+    if col.objects != None:
+        for o in col.objects:
+            if o.type == 'LIGHT':
+                tofy_object(o.data, c, base)
+
+def tofy_lights(col, c, base):
+    '''Apply ToF nodes to collection.'''
+    def _tofy(col, c, base):
+        tofy_objects(col, c, base)
+        for child in col.children:
+            _tofy(child, c, base)
+    _tofy(col, c, base)

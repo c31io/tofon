@@ -2,7 +2,8 @@ import bpy
 from bpy.types import Operator
 from .utils import (
     copy_collection, remove_collection,
-    relink_materials, target_types
+    relink_materials, tofy_object, tofy_lights,
+    target_types
     )
 
 class TOFON_OT_apply_mode(Operator):
@@ -44,11 +45,8 @@ class TOFON_OT_apply_mode(Operator):
         for o in bpy.data.objects:
             if o.type in target_types and o.active_material == None:
                 o.active_material = bpy.data.materials.new(name="NoMaterial")
-        # enable nodes for all materials
-        materials = bpy.data.materials
-        for i in materials:
-            i.use_nodes = True
         # remove obsolete materials
+        materials = bpy.data.materials
         to_remove = [i.name for i in materials if i.name[:4] == 'ToF_']
         for i in to_remove:
             materials.remove(materials[i])
@@ -66,26 +64,11 @@ class TOFON_OT_apply_mode(Operator):
                 for i in to_copy:
                     tof_mat = materials[i].copy()
                     tof_mat.name = f'ToF_{"RGB"[c]}_{i}'
-                    p, f = (c+1)%3, (c+2)%3 # path length and fall-off channels
-                    node_tree = tof_mat.node_tree
-                    nodes = node_tree.nodes
-                    power = nodes.new('ShaderNodeMath')
-                    power.operation = 'POWER'
-                    power.inputs[0].default_value = scene.ToF_base
-                    lpath = nodes.new('ShaderNodeLightPath')
-                    node_tree.links.new(lpath.outputs['Ray Length'], power.inputs[1])
-                    for node in nodes:
-                        for inpt in node.inputs:
-                            if inpt.type == 'RGBA' and inpt.is_linked == False:
-                                color = inpt.default_value[c] # backup original color
-                                combine = nodes.new('ShaderNodeCombineXYZ')
-                                combine.inputs['XYZ'[c]].default_value = color
-                                combine.inputs['XYZ'[f]].default_value = 1.0
-                                node_tree.links.new(power.outputs[0], combine.inputs['XYZ'[p]])
-                                node_tree.links.new(combine.outputs[0], inpt)
+                    tofy_object(tof_mat, c, scene.ToF_base)
                 # relink materials in RGB collections with ToF twins
                 relink_materials(chan_cols[c], c)
-                #TODO ToF twins for all lights
+                # ToF twins for all lights (unlike materials, lights are not shared via links)
+                tofy_lights(chan_cols[c], c, scene.ToF_base)
         return {'FINISHED'}
 
 #TODO
