@@ -65,7 +65,7 @@ def register():
         default=16, min=1, max=frame_max)
     bpy.types.Scene.ToF_multip = IntProperty(
         name='Multiplier',
-        default=32, min=1, max=reso_max)
+        default=2, min=1, max=reso_max)
     bpy.types.Scene.ToF_reso_x = IntProperty(
         name='Resolution X',
         default=1024, min=1, max=reso_max)

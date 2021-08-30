@@ -6,7 +6,7 @@ Much inspired by [How to calculate for every ray the total distance it has trave
 
 ## Development
 
-Install a portable version of [Blender](https://www.blender.org/download/) in user directory, and install the [VS Code plugin](https://marketplace.visualstudio.com/items?itemName=JacquesLucke.blender-development) for developent.
+Install a portable version of [Blender](https://www.blender.org/download/) in user directory, and install the [VS Code plugin](https://marketplace.visualstudio.com/items?itemName=JacquesLucke.blender-development) and the [fake bpy](https://github.com/nutti/fake-bpy-module) for developent.
 
 ## Warning
 

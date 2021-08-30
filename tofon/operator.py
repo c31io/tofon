@@ -5,6 +5,7 @@ from .utils import (
     relink_materials, tofy_object, tofy_lights,
     target_types)
 from .panel import reso_max
+from os import path
 
 class TOFON_OT_apply_mode(Operator):
     '''Apply ToF mode. Create a new collection and prepare shader nodes.'''
@@ -127,8 +128,15 @@ class TOFON_OT_render_scan(Operator):
         #TODO Render
         fpath = scene.render.filepath
         for c, b in enumerate(scene.ToF_mode):
-            pass
-        scene.render.path = fpath
+            if b == True:
+                for i in scene.collection.children:
+                    if i.name[:6] == f'ToF_{"RGB"[c]}_':
+                        i.hide_render = False
+                    else:
+                        i.hide_render = True
+                scene.render.filepath = path.join(fpath, 'RGB'[c])
+                bpy.ops.render.render(animation=True)
+        scene.render.filepath = fpath
         return {'FINISHED'}
 
 #TODO implement data synthesis: pybind (stand-alone) & python fallback
