@@ -8,6 +8,10 @@ Much inspired by [How to calculate for every ray the total distance it has trave
 
 Install a portable version of [Blender](https://www.blender.org/download/) in user directory, and install the [VS Code plugin](https://marketplace.visualstudio.com/items?itemName=JacquesLucke.blender-development) and the [fake bpy](https://github.com/nutti/fake-bpy-module) for developent.
 
+    mkdir ramfs
+    sudo mount -t tmpfs -o size=2048M tmpfs ramfs
+    cd ramfs
+
 ## Warning
 
 Not useful at the current stage of development
