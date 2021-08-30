@@ -125,7 +125,7 @@ class TOFON_OT_render_scan(Operator):
         scene.render.resolution_x = scene.ToF_reso_x * scene.ToF_multip
         scene.render.resolution_y = scene.ToF_reso_y * scene.ToF_multip
         scene.render.resolution_percentage = 100
-        #TODO Render
+        # Render
         fpath = scene.render.filepath
         for c, b in enumerate(scene.ToF_mode):
             if b == True:
@@ -135,8 +135,10 @@ class TOFON_OT_render_scan(Operator):
                     else:
                         i.hide_render = True
                 scene.render.filepath = path.join(fpath, 'RGB'[c])
+                #TODO scans other than normal
                 bpy.ops.render.render(animation=True)
         scene.render.filepath = fpath
+        #TODO save scan parameters
         return {'FINISHED'}
 
 #TODO implement data synthesis: pybind (stand-alone) & python fallback
