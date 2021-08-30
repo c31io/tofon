@@ -42,6 +42,8 @@ class TOFON_PT_para_setter(Panel):
         row.prop(scene.render, 'filepath', text='Cache')
         row = layout.row()
         row.operator('scene.render_tof_scan')
+        row = layout.row()
+        row.operator('scene.tof_synthesis')
 
 frame_max = 1048574
 reso_max = 65536

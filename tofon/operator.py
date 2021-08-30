@@ -6,6 +6,7 @@ from .utils import (
     target_types)
 from .panel import reso_max
 from os import path
+import json
 
 class TOFON_OT_apply_mode(Operator):
     '''Apply ToF mode. Create a new collection and prepare shader nodes.'''
@@ -138,21 +139,49 @@ class TOFON_OT_render_scan(Operator):
                 #TODO scans other than normal
                 bpy.ops.render.render(animation=True)
         scene.render.filepath = fpath
-        #TODO save scan parameters
+        # save scan information
+        info = {
+            'c': [i for i in scene.ToF_mode],
+            'b': scene.ToF_base,
+            's': scene.ToF_scan,
+            'f': scene.ToF_frames,
+            'm': scene.ToF_multip,
+            'x': scene.ToF_reso_x,
+            'y': scene.ToF_reso_y}
+        with open(path.join(fpath, 'info.json'), 'w') as f:
+            json.dump(info, f)
         return {'FINISHED'}
 
-#TODO implement data synthesis: pybind (stand-alone) & python fallback
-#TODO fallback warning self.report({'WARNING'},
-#                                   'Pybind module not found.
-#                                       Falling back to Python implementation.
-#                                       SYNTHESIS WILL BE SLOW!!')
 class TOFON_OT_synthesis(Operator):
-    pass
+    bl_idname = 'scene.tof_synthesis'
+    bl_label = 'Synthesis'
+    @classmethod
+    def poll(cls, context):
+        if path.isfile(path.join(context.scene.render.filepath, 'info.json')):
+            return True
+        else:
+            return False
+    def execute(self, context):
+        try:
+            from .kernel import tofkernel as tk
+        except ImportError:
+            from .kernel import tkfallback as tk
+            self.report({'WARNING'},
+                '''Pybind module 'tofkernel' not found, SYNTHESIS WILL BE SLOW!!''')
+        scene = context.scene
+        fpath = scene.render.filepath
+        with open(path.join(fpath, 'info.json'), 'r') as f:
+            info = json.load(f)
+        print(info)
+        #TODO raw bucket video
+        return {'FINISHED'}
 
 def register():
     bpy.utils.register_class(TOFON_OT_apply_mode)
     bpy.utils.register_class(TOFON_OT_render_scan)
+    bpy.utils.register_class(TOFON_OT_synthesis)
 
 def unregister():
     bpy.utils.unregister_class(TOFON_OT_apply_mode)
     bpy.utils.unregister_class(TOFON_OT_render_scan)
+    bpy.utils.unregister_class(TOFON_OT_synthesis)
