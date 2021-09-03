@@ -4,7 +4,8 @@ from bpy.props import (
     BoolVectorProperty,
     FloatProperty,
     EnumProperty,
-    IntProperty)
+    IntProperty,
+    StringProperty)
 
 class TOFON_PT_para_setter(Panel):
     bl_space_type = 'VIEW_3D'
@@ -43,7 +44,21 @@ class TOFON_PT_para_setter(Panel):
         row = layout.row()
         row.operator('scene.render_tof_scan')
         row = layout.row()
-        row.operator('scene.tof_synthesis')
+        row.prop(scene, 'ToF_opath')
+        row = layout.row()
+        row.operator('scene.tof_synthesis_raw')
+        row = layout.row()
+        row.prop(scene, 'ToF_threads', emboss=False)
+        row = layout.row()
+        row.prop(scene, 'ToF_bframe', emboss=False)
+        row = layout.row()
+        row.prop(scene, 'ToF_pspf', emboss=False)
+        row = layout.row()
+        row.operator('scene.tof_bucket_sort')
+        row = layout.row()
+        row.prop(scene, 'ToF_vfps', emboss=False)
+        row = layout.row()
+        row.operator('scene.tof_render_video')
 
 frame_max = 1048574
 reso_max = 65536
@@ -74,6 +89,21 @@ def register():
     bpy.types.Scene.ToF_reso_y = IntProperty(
         name='Resolution Y',
         default=1024, min=1, max=reso_max)
+    bpy.types.Scene.ToF_opath = StringProperty(
+        name='Output', subtype='FILE_PATH',
+        default='/tmp/')
+    bpy.types.Scene.ToF_threads = IntProperty(
+        name='Threads',
+        default=2, min=1, max=2048)
+    bpy.types.Scene.ToF_bframe = IntProperty(
+        name='Bucket frames',
+        default=96, min=1)
+    bpy.types.Scene.ToF_pspf = FloatProperty(
+        name='Picoseconds per frame', precision=3,
+        default=500, min=0.001)
+    bpy.types.Scene.ToF_vfps = IntProperty(
+        name='Video FPS',
+        default=24, min=1, max=1000)
 
 def unregister():
     del bpy.types.Scene.ToF_mode
@@ -83,4 +113,9 @@ def unregister():
     del bpy.types.Scene.ToF_multip
     del bpy.types.Scene.ToF_reso_x
     del bpy.types.Scene.ToF_reso_y
+    del bpy.types.Scene.ToF_opath
+    del bpy.types.Scene.ToF_bframe
+    del bpy.types.Scene.ToF_pspf
+    del bpy.types.Scene.ToF_vfps
+    del bpy.types.Scene.ToF_threads
     bpy.utils.unregister_class(TOFON_PT_para_setter)

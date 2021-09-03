@@ -5,8 +5,11 @@ from .utils import (
     relink_materials, tofy_object, tofy_lights,
     target_types)
 from .panel import reso_max
-from os import path
+from os import path, listdir, system
 import json
+import numpy as np
+from collections import defaultdict
+import imbuf
 
 class TOFON_OT_apply_mode(Operator):
     '''Apply ToF mode. Create a new collection and prepare shader nodes.'''
@@ -73,7 +76,6 @@ class TOFON_OT_apply_mode(Operator):
                 tofy_lights(chan_cols[c], c, scene.ToF_base)
         return {'FINISHED'}
 
-#TODO
 class TOFON_OT_render_scan(Operator):
     '''
     normal: reso = (x*m)*(y*m)*f
@@ -147,14 +149,15 @@ class TOFON_OT_render_scan(Operator):
             'f': scene.ToF_frames,
             'm': scene.ToF_multip,
             'x': scene.ToF_reso_x,
-            'y': scene.ToF_reso_y}
+            'y': scene.ToF_reso_y,
+            'p': scene.render.filepath}
         with open(path.join(fpath, 'info.json'), 'w') as f:
             json.dump(info, f)
         return {'FINISHED'}
 
-class TOFON_OT_synthesis(Operator):
-    bl_idname = 'scene.tof_synthesis'
-    bl_label = 'Synthesis'
+class TOFON_OT_synthesis_raw(Operator):
+    bl_idname = 'scene.tof_synthesis_raw'
+    bl_label = 'Synthesis Raw'
     @classmethod
     def poll(cls, context):
         if path.isfile(path.join(context.scene.render.filepath, 'info.json')):
@@ -173,15 +176,93 @@ class TOFON_OT_synthesis(Operator):
         with open(path.join(fpath, 'info.json'), 'r') as f:
             info = json.load(f)
         print(info)
-        #TODO raw bucket video
+        # cache {cpath}/{color}{frame}.exr
+        cpath  = info['p']
+        colors = info['c']
+        frames = info['f']
+        multip = info['m']
+        file_found = listdir(cpath)
+        cfiles = defaultdict() # the list of cached file for parallelization
+        # raw(x, y, rgb, event, color&depth)
+        # 3 * 2 = 6 channels: ((R, TR), (G TG), (B, TB))
+        raw = np.zeros((info['x'], info['y'], 3, info['f']*info['m']**2, 2))
+        for c, b in zip('RGB', colors):
+            if b == False:
+                continue
+            cfiles[c] = [i for i in file_found
+                if i[0] == c and i[-4:] == '.exr'
+                and 1 <= int(i[1:-4]) <= frames]
+        print(cfiles)
+        # fill in data
+        for c in cfiles:
+            for p in cfiles[c]:
+                f = np.array(imbuf.load(path.join(cpath, p)))
+                frame = int(p[1:-4])
+                print(f'tk.fill({raw.shape}, {p}, {c}, {frame}, {multip})')
+                tk.fill(raw, f, 'RGB'.find(c), frame, multip)
+        # sort raw
+        tk.raw_sort(raw)
+        # save raw
+        np.save(path.join(scene.ToF_opath, 'raw.npy'), raw)
+        return {'FINISHED'}
+
+class TOFON_OT_bucket_sort(Operator):
+    bl_idname = 'scene.tof_bucket_sort'
+    bl_label = 'Bucket Sort'
+    @classmethod
+    def poll(cls, context):
+        scene = context.scene
+        if path.isfile(path.join(scene.ToF_opath, 'raw.npy')):
+            return True
+        else:
+            return False
+    def execute(self, context):
+        try:
+            from .kernel import tofkernel as tk
+        except ImportError:
+            from .kernel import tkfallback as tk
+            self.report({'WARNING'},
+                '''Pybind module 'tofkernel' not found, BUCKET SORT WILL BE SLOW!!''')
+        scene = context.scene
+        # raw(x, y, rgb, event, color&depth)
+        raw = np.load(path.join(scene.ToF_opath, 'raw.npy'))
+        s = raw.shape
+        # bucket(t, x, y, rgb)
+        bucket = np.zeros((scene.ToF_bframe, s[0], s[1], 3))
+        tk.bucket_sort(bucket, raw, scene.ToF_pspf, scene.ToF_threads)
+        np.save(path.join(scene.ToF_opath, 'bucket.npy'), bucket)
+        return {'FINISHED'}
+
+class TOFON_OT_render_video(Operator):
+    bl_idname = 'scene.tof_render_video'
+    bl_label = 'Render Video'
+    @classmethod
+    def poll(cls, context):
+        scene = context.scene
+        if path.isfile(path.join(scene.ToF_opath, 'bucket.npy')):
+            return True
+        else:
+            return False
+    def execute(self, context):
+        if system('ffmpeg -version') != 0:
+            self.report({'WARNING'},
+                '''ffmpeg not found, aborting...''')
+            return {'CANCELLED'}
+        scene = context.scene
+        #TODO write images from bucket
+        #TODO system('ffmpeg') to render video
         return {'FINISHED'}
 
 def register():
     bpy.utils.register_class(TOFON_OT_apply_mode)
     bpy.utils.register_class(TOFON_OT_render_scan)
-    bpy.utils.register_class(TOFON_OT_synthesis)
+    bpy.utils.register_class(TOFON_OT_synthesis_raw)
+    bpy.utils.register_class(TOFON_OT_bucket_sort)
+    bpy.utils.register_class(TOFON_OT_render_video)
 
 def unregister():
     bpy.utils.unregister_class(TOFON_OT_apply_mode)
     bpy.utils.unregister_class(TOFON_OT_render_scan)
-    bpy.utils.unregister_class(TOFON_OT_synthesis)
+    bpy.utils.unregister_class(TOFON_OT_synthesis_raw)
+    bpy.utils.unregister_class(TOFON_OT_bucket_sort)
+    bpy.utils.unregister_class(TOFON_OT_render_video)
