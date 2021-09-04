@@ -88,7 +88,7 @@ def register():
         default=1024, min=1, max=reso_max)
     bpy.types.Scene.ToF_reso_y = IntProperty(
         name='Resolution Y',
-        default=1024, min=1, max=reso_max)
+        default=512, min=1, max=reso_max)
     bpy.types.Scene.ToF_opath = StringProperty(
         name='Output', subtype='FILE_PATH',
         default='/tmp/')

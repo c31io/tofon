@@ -9,7 +9,6 @@ from os import path, listdir, system
 import json
 import numpy as np
 from collections import defaultdict
-import imbuf
 
 class TOFON_OT_apply_mode(Operator):
     '''Apply ToF mode. Create a new collection and prepare shader nodes.'''
@@ -185,7 +184,7 @@ class TOFON_OT_synthesis_raw(Operator):
         cfiles = defaultdict() # the list of cached file for parallelization
         # raw(x, y, rgb, event, color&depth)
         # 3 * 2 = 6 channels: ((R, TR), (G TG), (B, TB))
-        raw = np.zeros((info['x'], info['y'], 3, info['f']*info['m']**2, 2))
+        raw = np.zeros((info['x'], info['y'], 3, info['f']*info['m']**2, 2), dtype=np.float32)
         for c, b in zip('RGB', colors):
             if b == False:
                 continue
@@ -196,9 +195,13 @@ class TOFON_OT_synthesis_raw(Operator):
         # fill in data
         for c in cfiles:
             for p in cfiles[c]:
-                f = np.array(imbuf.load(path.join(cpath, p)))
+                loaded = bpy.data.images.load(path.join(cpath, p))
+                f = np.array(loaded.pixels[:], dtype=np.float32)
+                f = np.reshape(f, list(loaded.size[:])+[4])
+                bpy.data.images.remove(loaded)
                 frame = int(p[1:-4])
                 print(f'tk.fill({raw.shape}, {p}, {c}, {frame}, {multip})')
+                print(f.shape, f.dtype)
                 tk.fill(raw, f, 'RGB'.find(c), frame, multip)
         # sort raw
         tk.raw_sort(raw)
