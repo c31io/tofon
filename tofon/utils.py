@@ -62,6 +62,7 @@ def relink_materials(col, c):
 
 def tofy_object(o, c, base):
     '''Add ToF nodes to material or light.'''
+    #FIXME OPL = RL * IOR != RL
     o.use_nodes = True
     p, f = (c+1)%3, (c+2)%3 # path length and fall-off channels
     node_tree = o.node_tree

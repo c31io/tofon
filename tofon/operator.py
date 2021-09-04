@@ -45,7 +45,7 @@ class TOFON_OT_apply_mode(Operator):
                 chan_cols.append(None)
         # remove world light
         bpy.data.worlds["World"].node_tree.nodes["Background"].inputs[1].default_value = 0.0
-        # add material for all objects
+        # add material to objects without one
         for o in bpy.data.objects:
             if o.type in target_types and o.active_material == None:
                 o.active_material = bpy.data.materials.new(name="NoMaterial")
@@ -105,6 +105,7 @@ class TOFON_OT_render_scan(Operator):
         scene = context.scene
         # Cycle
         scene.cycles.samples = 1 # prevent overwrite
+        scene.cycles.use_animated_seed = True
         # Saving
         scene.render.use_file_extension = True
         scene.render.use_render_cache = False
@@ -193,6 +194,7 @@ class TOFON_OT_synthesis_raw(Operator):
                 and 1 <= int(i[1:-4]) <= frames]
         print(cfiles)
         # fill in data
+        #TODO async I/O
         for c in cfiles:
             for p in cfiles[c]:
                 loaded = bpy.data.images.load(path.join(cpath, p))
@@ -202,7 +204,7 @@ class TOFON_OT_synthesis_raw(Operator):
                 frame = int(p[1:-4])
                 print(f'tk.fill({raw.shape}, {p}, {c}, {frame}, {multip})')
                 print(f.shape, f.dtype)
-                tk.fill(raw, f, 'RGB'.find(c), frame, multip)
+                tk.fill(raw, f, 'RGB'.find(c), frame, multip, scene.ToF_base)
         # sort raw
         tk.raw_sort(raw)
         # save raw
