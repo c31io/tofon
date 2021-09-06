@@ -255,7 +255,17 @@ class TOFON_OT_render_video(Operator):
             return {'CANCELLED'}
         scene = context.scene
         #TODO write images from bucket
+        # bucket(t, x, y, rgb)
+        bucket = np.load(path.join(scene.ToF_opath, 'bucket.npy'))
+        for t, fr in enumerate(bucket):
+            buff = bpy.data.images.new(f'ToF_buffer_{t}', bucket.shape[1], bucket.shape[2])
+            buff.pixels = fr.ravel()
+            buff.filepath = path.join(scene.ToF_opath, f"ToF_{t:04d}.png")
+            buff.file_format = 'PNG'
+            buff.save()
         #TODO system('ffmpeg') to render video
+        #TODO option gamma
+        system(f'ffmpeg -i {path.join(scene.ToF_opath, "ToF_%d.exr")} -vcodec mpeg4 {path.join(scene.ToF_opath, "ToF.avi")}')
         return {'FINISHED'}
 
 def register():

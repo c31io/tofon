@@ -28,6 +28,14 @@ def raw_sort(raw):
 
 # bucket(t, x, y, rgb)
 def bucket_sort(bucket, raw, pspf, threads):
-    unit_length  = pspf * 1e-12 * 3e8
     #TODO bucket parallelize in pybind
-    pass
+    unit_length  = pspf * 1e-12 * 3e8
+    for x, col in enumerate(raw):
+        for y, px in enumerate(col):
+            for c, rgb in enumerate(px):
+                for event in rgb:
+                    if event[0] == 0.0:
+                        continue
+                    t = math.floor(event[1] / unit_length)
+                    if 0 <= t < bucket.shape[0]:
+                        bucket[t, x, y, c] += event[0]
