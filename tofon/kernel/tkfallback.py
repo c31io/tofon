@@ -18,7 +18,7 @@ def fill(raw, image, channel, frame, multip, base):
             p, f = (c+1)%3, (c+2)%3 # path length and fall-off channels
             color = px[c]
             depth = math.log(px[p]/px[f], base)
-            raw[rx, ry, c, event_shift, :] = (color, depth)
+            raw[ry, rx, c, event_shift, :] = (color, depth)
 
 def raw_sort(raw):
     for x, col in enumerate(raw):

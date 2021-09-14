@@ -74,7 +74,7 @@ def tofy_object(o, c, base):
     node_tree.links.new(lpath.outputs['Ray Length'], power.inputs[1])
     for node in nodes:
         for inpt in node.inputs:
-            if inpt.type == 'RGBA' and inpt.is_linked == False:
+            if inpt.type == 'RGBA' and inpt.is_linked == False and inpt.name != 'Emission':
                 color = inpt.default_value[c] # backup original color
                 combine = nodes.new('ShaderNodeCombineXYZ')
                 combine.inputs['XYZ'[c]].default_value = color

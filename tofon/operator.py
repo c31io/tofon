@@ -199,7 +199,7 @@ class TOFON_OT_synthesis_raw(Operator):
             for p in cfiles[c]:
                 loaded = bpy.data.images.load(path.join(cpath, p))
                 f = np.array(loaded.pixels[:], dtype=np.float32)
-                f = np.reshape(f, list(loaded.size[:])+[4])
+                f = np.reshape(f, list(loaded.size[:])[::-1]+[4])
                 bpy.data.images.remove(loaded)
                 frame = int(p[1:-4])
                 print(f'tk.fill({raw.shape}, {p}, {c}, {frame}, {multip})')
