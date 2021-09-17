@@ -31,6 +31,7 @@ def bucket_sort(bucket, raw, pspf, threads):
     #TODO bucket parallelize in pybind
     unit_length  = pspf * 1e-12 * 3e8
     for x, col in enumerate(raw):
+        print(x, len(raw))
         for y, px in enumerate(col):
             for c, rgb in enumerate(px):
                 for event in rgb:
