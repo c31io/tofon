@@ -9,6 +9,7 @@ from os import path, listdir, system
 import json
 import numpy as np
 from collections import defaultdict
+import math
 
 class TOFON_OT_apply_mode(Operator):
     '''Apply ToF mode. Create a new collection and prepare shader nodes.'''
@@ -165,12 +166,7 @@ class TOFON_OT_synthesis_raw(Operator):
         else:
             return False
     def execute(self, context):
-        try:
-            from .kernel import tofkernel as tk
-        except ImportError:
-            from .kernel import tkfallback as tk
-            self.report({'WARNING'},
-                '''Pybind module 'tofkernel' not found, SYNTHESIS WILL BE SLOW!!''')
+        from .kernel import tofkernel as tk
         scene = context.scene
         fpath = scene.render.filepath
         with open(path.join(fpath, 'info.json'), 'r') as f:
@@ -194,7 +190,6 @@ class TOFON_OT_synthesis_raw(Operator):
                 and 1 <= int(i[1:-4]) <= frames]
         print(cfiles)
         # fill in data
-        #TODO async I/O
         for c in cfiles:
             for p in cfiles[c]:
                 loaded = bpy.data.images.load(path.join(cpath, p))
@@ -204,8 +199,9 @@ class TOFON_OT_synthesis_raw(Operator):
                 frame = int(p[1:-4])
                 print(f'tk.fill({raw.shape}, {p}, {c}, {frame}, {multip})')
                 print(f.shape, f.dtype)
-                tk.fill(raw, f, 'RGB'.find(c), frame, multip, scene.ToF_base)
+                tk.fill(raw, f, 'RGB'.find(c), frame, multip)
         # sort raw
+        raw[:,:,:,:,1] = np.log(raw[:,:,:,:,1]) / np.log(scene.ToF_base)
         tk.raw_sort(raw)
         # save raw
         np.save(path.join(scene.ToF_opath, 'raw.npy'), raw)
@@ -222,50 +218,15 @@ class TOFON_OT_bucket_sort(Operator):
         else:
             return False
     def execute(self, context):
-        try:
-            from .kernel import tofkernel as tk
-        except ImportError:
-            from .kernel import tkfallback as tk
-            self.report({'WARNING'},
-                '''Pybind module 'tofkernel' not found, BUCKET SORT WILL BE SLOW!!''')
+        from .kernel import tofkernel as tk
         scene = context.scene
         # raw(x, y, rgb, event, color&depth)
         raw = np.load(path.join(scene.ToF_opath, 'raw.npy'))
         s = raw.shape
         # bucket(t, x, y, rgb)
         bucket = np.zeros((scene.ToF_bframe, s[0], s[1], 3))
-        tk.bucket_sort(bucket, raw, scene.ToF_pspf, scene.ToF_threads)
+        tk.bucket_sort(bucket, raw, scene.ToF_pspf)
         np.save(path.join(scene.ToF_opath, 'bucket.npy'), bucket)
-        return {'FINISHED'}
-
-class TOFON_OT_render_video(Operator):
-    bl_idname = 'scene.tof_render_video'
-    bl_label = 'Render Video'
-    @classmethod
-    def poll(cls, context):
-        scene = context.scene
-        if path.isfile(path.join(scene.ToF_opath, 'bucket.npy')):
-            return True
-        else:
-            return False
-    def execute(self, context):
-        if system('ffmpeg -version') != 0:
-            self.report({'WARNING'},
-                '''ffmpeg not found, aborting...''')
-            return {'CANCELLED'}
-        scene = context.scene
-        #TODO write images from bucket
-        # bucket(t, x, y, rgb)
-        bucket = np.load(path.join(scene.ToF_opath, 'bucket.npy'))
-        for t, fr in enumerate(bucket):
-            buff = bpy.data.images.new(f'ToF_buffer_{t}', bucket.shape[1], bucket.shape[2])
-            buff.pixels = fr.ravel()
-            buff.filepath = path.join(scene.ToF_opath, f"ToF_{t:04d}.png")
-            buff.file_format = 'PNG'
-            buff.save()
-        #TODO system('ffmpeg') to render video
-        #TODO option gamma
-        system(f'ffmpeg -i {path.join(scene.ToF_opath, "ToF_%d.exr")} -vcodec mpeg4 {path.join(scene.ToF_opath, "ToF.avi")}')
         return {'FINISHED'}
 
 def register():
@@ -273,11 +234,9 @@ def register():
     bpy.utils.register_class(TOFON_OT_render_scan)
     bpy.utils.register_class(TOFON_OT_synthesis_raw)
     bpy.utils.register_class(TOFON_OT_bucket_sort)
-    bpy.utils.register_class(TOFON_OT_render_video)
 
 def unregister():
     bpy.utils.unregister_class(TOFON_OT_apply_mode)
     bpy.utils.unregister_class(TOFON_OT_render_scan)
     bpy.utils.unregister_class(TOFON_OT_synthesis_raw)
     bpy.utils.unregister_class(TOFON_OT_bucket_sort)
-    bpy.utils.unregister_class(TOFON_OT_render_video)

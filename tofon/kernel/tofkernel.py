@@ -1,4 +1,9 @@
+import sys #TODO pkg path in panel
+packages_path = '/home/user/.local/lib/python3.9/site-packages/'
+sys.path.insert(0, packages_path)
+
 import numpy as np
+from numba import jit
 import math
 
 # raw(x, y, rgb, event, color&depth)
@@ -6,7 +11,8 @@ import math
 # channel: 0, 1, 2
 # frame >= 1
 # multip >= 1
-def fill(raw, image, channel, frame, multip, base):
+@jit(nopython=True)
+def fill(raw, image, channel, frame, multip):
     for ix, col in enumerate(image):
         for iy, px in enumerate(col):
             rx, ry = ix // multip, iy // multip
@@ -16,10 +22,11 @@ def fill(raw, image, channel, frame, multip, base):
             event_shift = frame_shift + multi_shift
             c = channel             # target color
             p, f = (c+1)%3, (c+2)%3 # path length and fall-off channels
-            color = px[c]
-            depth = math.log(px[p]/px[f], base)
-            raw[ry, rx, c, event_shift, :] = (color, depth)
+            raw[ry, rx, c, event_shift, 0] = px[c]
+            if px[f] != 0:
+                raw[ry, rx, c, event_shift, 1] = px[p]/px[f]
 
+@jit(nopython=True)
 def raw_sort(raw):
     for x, col in enumerate(raw):
         for y, px in enumerate(col):
@@ -27,8 +34,8 @@ def raw_sort(raw):
                 raw[x,y,c,:] = rgb[rgb[:, 1].argsort()]
 
 # bucket(t, x, y, rgb)
-def bucket_sort(bucket, raw, pspf, threads):
-    #TODO bucket parallelize in pybind
+@jit(nopython=True, parallel=True)
+def bucket_sort(bucket, raw, pspf):
     unit_length  = pspf * 1e-12 * 3e8
     for x, col in enumerate(raw):
         print(x, len(raw))
