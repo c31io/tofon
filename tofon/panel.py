@@ -72,7 +72,7 @@ reso_max = 65536
 def register():
     bpy.utils.register_class(TOFON_PT_para_setter)
     bpy.types.Scene.ToF_mode = BoolVectorProperty(
-        name='Mode')
+        name='Mode', default=(True,True,True))
     bpy.types.Scene.ToF_base = FloatProperty(
         name='Logarithmic Base', precision=3,
         default=0.950, min=0.001, max=0.999,
@@ -112,7 +112,7 @@ def register():
         default=0, min=0)
     bpy.types.Scene.ToF_contrast = FloatProperty(
         name='Contrast', precision=6,
-        default=1, min=0.000001)
+        default=10, min=0.000001)
     bpy.types.Scene.ToF_gamma = FloatProperty(
         name='Gamma', precision=6,
         default=1, min=0.000001)
