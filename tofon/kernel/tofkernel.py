@@ -33,7 +33,7 @@ def raw_sort(raw):
                 raw[x,y,c,:] = rgb[rgb[:, 1].argsort()]
 
 # bucket(t, x, y, rgb)
-@jit(nopython=True, parallel=True)
+@jit(nopython=True)
 def bucket_sort(bucket, raw, pspf):
     unit_length  = pspf * 1e-12 * 3e8
     for x, col in enumerate(raw):
