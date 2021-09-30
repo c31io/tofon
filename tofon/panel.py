@@ -44,6 +44,8 @@ class TOFON_PT_para_setter(Panel):
         row = layout.row()
         row.operator('scene.render_tof_scan')
         row = layout.row()
+        row.prop(scene, 'ToF_mpath')
+        row = layout.row()
         row.prop(scene, 'ToF_opath')
         row = layout.row()
         row.operator('scene.tof_synthesis_raw')
@@ -53,6 +55,16 @@ class TOFON_PT_para_setter(Panel):
         row.prop(scene, 'ToF_pspf', emboss=False)
         row = layout.row()
         row.operator('scene.tof_bucket_sort')
+        row = layout.row()
+        row.prop(scene, 'ToF_brightness', emboss=False)
+        row = layout.row()
+        row.prop(scene, 'ToF_contrast', emboss=False)
+        row = layout.row()
+        row.prop(scene, 'ToF_gamma', emboss=False)
+        row = layout.row()
+        row.prop(scene, 'ToF_vfps', emboss=False)
+        row = layout.row()
+        row.operator('scene.tof_render_video')
 
 frame_max = 1048574
 reso_max = 65536
@@ -88,10 +100,25 @@ def register():
         default='/tmp/')
     bpy.types.Scene.ToF_bframe = IntProperty(
         name='Bucket frames',
-        default=96, min=1)
+        default=100, min=1)
     bpy.types.Scene.ToF_pspf = FloatProperty(
         name='Picoseconds per frame', precision=3,
-        default=500, min=0.001)
+        default=1000, min=0.001)
+    bpy.types.Scene.ToF_mpath = StringProperty(
+        name='Module Path', subtype='FILE_PATH',
+        default='/home/user/.local/lib/python3.9/site-packages/')
+    bpy.types.Scene.ToF_brightness = FloatProperty(
+        name='Brightness', precision=6,
+        default=0, min=0)
+    bpy.types.Scene.ToF_contrast = FloatProperty(
+        name='Contrast', precision=6,
+        default=1, min=0.000001)
+    bpy.types.Scene.ToF_gamma = FloatProperty(
+        name='Gamma', precision=6,
+        default=1, min=0.000001)
+    bpy.types.Scene.ToF_vfps = IntProperty(
+        name='Frame Per Second',
+        default=24, min=1)
 
 def unregister():
     del bpy.types.Scene.ToF_mode
@@ -104,4 +131,9 @@ def unregister():
     del bpy.types.Scene.ToF_opath
     del bpy.types.Scene.ToF_bframe
     del bpy.types.Scene.ToF_pspf
+    del bpy.types.Scene.ToF_mpath
+    del bpy.types.Scene.ToF_brightness
+    del bpy.types.Scene.ToF_contrast
+    del bpy.types.Scene.ToF_gamma
+    del bpy.types.Scene.ToF_vfps
     bpy.utils.unregister_class(TOFON_PT_para_setter)

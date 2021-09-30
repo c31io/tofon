@@ -5,11 +5,10 @@ from .utils import (
     relink_materials, tofy_object, tofy_lights,
     target_types)
 from .panel import reso_max
-from os import path, listdir, system
+from os import path, listdir
 import json
 import numpy as np
 from collections import defaultdict
-import math
 
 class TOFON_OT_apply_mode(Operator):
     '''Apply ToF mode. Create a new collection and prepare shader nodes.'''
@@ -229,14 +228,45 @@ class TOFON_OT_bucket_sort(Operator):
         np.save(path.join(scene.ToF_opath, 'bucket.npy'), bucket)
         return {'FINISHED'}
 
+class TOFON_OT_render_video(Operator):
+    bl_idname = 'scene.tof_render_video'
+    bl_label = 'Render Video'
+    @classmethod
+    def poll(cls, context):
+        scene = context.scene
+        if path.isfile(path.join(scene.ToF_opath, 'bucket.npy')):
+            return True
+        else:
+            return False
+    def execute(self, context):
+        from .kernel import tofkernel as tk
+        scene = context.scene
+        b = np.load(path.join(scene.ToF_opath, 'bucket.npy'))
+        import cv2
+        frameSize = b.shape[1:3]
+        out = cv2.VideoWriter(
+            path.join(scene.ToF_opath, 'video.mp4'),
+            cv2.VideoWriter_fourcc(*'MP4V'),
+            scene.ToF_vfps, frameSize)
+        c = np.swapaxes(b,1,2)
+        for i in c:
+            j = np.array(np.flip(np.flip(np.clip(
+                (scene.ToF_contrast*i+scene.ToF_brightness)**scene.ToF_gamma
+            ,0,255),2),0), dtype=np.uint8)
+            out.write(j)
+        out.release()
+        return {'FINISHED'}
+
 def register():
     bpy.utils.register_class(TOFON_OT_apply_mode)
     bpy.utils.register_class(TOFON_OT_render_scan)
     bpy.utils.register_class(TOFON_OT_synthesis_raw)
     bpy.utils.register_class(TOFON_OT_bucket_sort)
+    bpy.utils.register_class(TOFON_OT_render_video)
 
 def unregister():
     bpy.utils.unregister_class(TOFON_OT_apply_mode)
     bpy.utils.unregister_class(TOFON_OT_render_scan)
     bpy.utils.unregister_class(TOFON_OT_synthesis_raw)
     bpy.utils.unregister_class(TOFON_OT_bucket_sort)
+    bpy.utils.unregister_class(TOFON_OT_render_video)
