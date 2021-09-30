@@ -106,6 +106,7 @@ class TOFON_OT_render_scan(Operator):
         # Cycle
         scene.cycles.samples = 1 # prevent overwrite
         scene.cycles.use_animated_seed = True
+        scene.cycles.pixel_filter_type = 'BOX'
         # Saving
         scene.render.use_file_extension = True
         scene.render.use_render_cache = False
