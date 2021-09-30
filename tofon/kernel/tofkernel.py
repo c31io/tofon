@@ -1,8 +1,7 @@
-import sys #TODO pkg path in panel
-packages_path = '/home/user/.local/lib/python3.9/site-packages/'
-sys.path.insert(0, packages_path)
+import bpy, sys
+if sys.path[0] != bpy.context.scene.ToF_mpath:
+    sys.path.insert(0, bpy.context.scene.ToF_mpath)
 
-import numpy as np
 from numba import jit
 import math
 
@@ -38,7 +37,7 @@ def raw_sort(raw):
 def bucket_sort(bucket, raw, pspf):
     unit_length  = pspf * 1e-12 * 3e8
     for x, col in enumerate(raw):
-        print(x, len(raw))
+        #print(x, len(raw))
         for y, px in enumerate(col):
             for c, rgb in enumerate(px):
                 for event in rgb:
