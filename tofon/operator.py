@@ -9,6 +9,7 @@ from os import path, listdir
 import json
 import numpy as np
 from collections import defaultdict
+import sys
 
 class TOFON_OT_apply_mode(Operator):
     '''Apply ToF mode. Create a new collection and prepare shader nodes.'''
@@ -243,6 +244,8 @@ class TOFON_OT_render_video(Operator):
         from .kernel import tofkernel as tk
         scene = context.scene
         b = np.load(path.join(scene.ToF_opath, 'bucket.npy'))
+        if bpy.context.scene.ToF_mpath not in sys.path:
+            sys.path.insert(0, bpy.context.scene.ToF_mpath)
         import cv2
         frameSize = b.shape[1:3]
         out = cv2.VideoWriter(
