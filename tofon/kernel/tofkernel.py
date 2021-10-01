@@ -1,5 +1,5 @@
 import bpy, sys
-if sys.path[0] != bpy.context.scene.ToF_mpath:
+if bpy.context.scene.ToF_mpath not in sys.path:
     sys.path.insert(0, bpy.context.scene.ToF_mpath)
 
 from numba import jit
