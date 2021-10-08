@@ -10,6 +10,11 @@ Open Blender default scene.
 
 Modify `Module Path` to where `cv2` and `numba` are installed.
 
+To install them with conda,
+```
+conda create --name tofon python=3.9.2 opencv=4.5.3 numba=0.54.0
+```
+
 Click the buttons from the top to bottom.
 
 Find the video in temperate file directory.
@@ -27,5 +32,7 @@ sudo mount -t tmpfs -o size=2048M tmpfs ~/ramfs
 ## Warning
 
 Only accept simple blend file and physical shader nodes.
+
+Shorter path overwrites the longer ones.
 
 Not fully tested.
