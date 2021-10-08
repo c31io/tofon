@@ -6,14 +6,17 @@ Much inspired by [How to calculate for every ray the total distance it has trave
 
 # Usage
 
-Open Blender default scene.
+Install python 3.9.2 (version as the python in blender 3.93).
+
+Then install the modules,
+
+```
+python -m pip install numba opencv-python
+```
+
+Open the Blender default scene.
 
 Modify `Module Path` to where `cv2` and `numba` are installed.
-
-To install them with conda,
-```
-conda create --name tofon python=3.9.2 opencv=4.5.3 numba=0.54.0
-```
 
 Click the buttons from the top to bottom.
 
@@ -24,6 +27,7 @@ Find the video in temperate file directory.
 Install a portable version of [Blender](https://www.blender.org/download/) in user directory, and install the [VS Code plugin](https://marketplace.visualstudio.com/items?itemName=JacquesLucke.blender-development) and the [fake bpy](https://github.com/nutti/fake-bpy-module) for developent.
 
 On Linux, to keep cache in RAM, create RAM file system,
+
 ```
 mkdir ~/ramfs
 sudo mount -t tmpfs -o size=2048M tmpfs ~/ramfs
