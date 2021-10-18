@@ -6,7 +6,7 @@ Much inspired by [How to calculate for every ray the total distance it has trave
 
 # Usage
 
-Install python 3.9.2 (version as the python in blender 3.93).
+Install python 3.9.2 (version as the python in blender 2.93).
 
 Then install the modules,
 
