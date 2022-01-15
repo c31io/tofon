@@ -6,7 +6,7 @@ Much inspired by [How to calculate for every ray the total distance it has trave
 
 # Usage
 
-Install python 3.9.2 (version as the python in blender 2.93).
+Install Python 3.9.2 (version as Python in Blender 2.93).
 
 Then install the modules,
 
@@ -18,25 +18,27 @@ Open the Blender default scene.
 
 Modify `Module Path` to where `cv2` and `numba` are installed.
 
-Click the buttons from the top to bottom.
+Click the buttons from the top to the bottom.
 
-Find the video in temperate file directory.
+Find the video in the temperate file directory.
 
 ## Development
 
 Install a portable version of [Blender](https://www.blender.org/download/) in user directory, and install the [VS Code plugin](https://marketplace.visualstudio.com/items?itemName=JacquesLucke.blender-development) and the [fake bpy](https://github.com/nutti/fake-bpy-module) for developent.
 
-On Linux, to keep cache in RAM, create RAM file system,
+On Linux, to keep the cache in RAM, create a RAM file system,
 
 ```
 mkdir ~/ramfs
 sudo mount -t tmpfs -o size=2048M tmpfs ~/ramfs
 ```
 
-## Warning
+## Known Issues
 
-Only accept simple blend file and physical shader nodes.
+Only accept simple blend files and texture-free shader nodes.
 
-Shorter path overwrites the longer ones.
+A shorter path overwrites the longer ones.
 
-Not fully tested.
+High ray-depth patterns spin.
+
+Ior is not supported.
