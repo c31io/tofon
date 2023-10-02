@@ -20,7 +20,7 @@ Modify `Module Path` to where `cv2` and `numba` are installed.
 
 Click the buttons from the top to the bottom.
 
-Find the video in the temperate file directory.
+Find the video in the temperary file directory.
 
 ## Development
 
