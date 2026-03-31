@@ -116,10 +116,13 @@ class TOFON_OT_render_scan(Operator):
         scene.render.image_settings.color_mode = 'RGB'
         scene.render.image_settings.color_depth = '32'
         scene.render.image_settings.exr_codec = 'ZIP'
-        scene.render.image_settings.use_zbuffer = False
-        scene.render.image_settings.use_preview = False
-        scene.render.use_overwrite = True
-        scene.render.use_placeholder = True
+        try: # Settings removed in newer version
+            scene.render.image_settings.use_zbuffer = False
+            scene.render.image_settings.use_preview = False
+            scene.render.use_overwrite = True
+            scene.render.use_placeholder = True
+        except:  # noqa: E722
+            pass
         # Post Processing
         scene.render.use_compositing = False
         scene.render.use_sequencer = False
